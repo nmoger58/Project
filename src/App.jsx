@@ -7,6 +7,7 @@ const GLB = {
   laptop:  "/alienware_m18_gaming_laptop (1).glb",
   runner:  "/male_running_20_frames_loop.glb",
   chef:    "/chefs_hat_-_free_model.glb",
+  trophy: "/trophy.glb"
 };
 
 /* ═══════════════════════════════════════════
@@ -183,7 +184,18 @@ function loadGLB(path, scene, targetRadius = 1.0) {
               const mats = Array.isArray(child.material) ? child.material : [child.material];
               mats.forEach(m => {
                 if (m.isMeshStandardMaterial || m.isMeshPhysicalMaterial) {
-                  m.envMapIntensity = 1.2;
+                  m.envMapIntensity = 3.0;  // was 1.2 — much brighter reflections
+                  // Slightly boost brightness on dark materials
+                  if (m.color) {
+                    const col = m.color;
+                    const brightness = col.r * 0.299 + col.g * 0.587 + col.b * 0.114;
+                    if (brightness < 0.15) {
+                      col.r = Math.min(1, col.r + 0.08);
+                      col.g = Math.min(1, col.g + 0.08);
+                      col.b = Math.min(1, col.b + 0.08);
+                    }
+                  }
+                  m.needsUpdate = true;
                 }
               });
             }
@@ -231,7 +243,7 @@ function Cursor() {
 
 /* ═══════════════════════════════════════════
    HERO THREE SCENE
-   • Loads your Alienware laptop GLB centre-right
+   • Loads your Trophy GLB centre-right
    • Floating decorative shapes around it
    • Particle field + mouse parallax
 ═══════════════════════════════════════════ */
@@ -249,32 +261,36 @@ function HeroThreeScene() {
     camera.position.set(0, 0.5, 8);
 
     // ── Lights ─────────────────────────────
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-    const dl = new THREE.DirectionalLight(0x4f6ef7, 3.5);
+    scene.add(new THREE.AmbientLight(0xffffff, 2.2));  // was 0.6 — much brighter fill
+    const dl = new THREE.DirectionalLight(0xffffff, 4.0);  // white key light boosted
     dl.position.set(5, 8, 5); dl.castShadow = true; scene.add(dl);
-    const dl2 = new THREE.DirectionalLight(0x2dd4bf, 2);
+    const dl2 = new THREE.DirectionalLight(0x2dd4bf, 3.5);
     dl2.position.set(-5, -3, 3); scene.add(dl2);
-    const pl = new THREE.PointLight(0x7c3aed, 4, 22);
+    const dl3 = new THREE.DirectionalLight(0xffffff, 3.0);  // extra front fill light
+    dl3.position.set(0, 2, 8); scene.add(dl3);
+    const pl = new THREE.PointLight(0x7c3aed, 6, 22);
     pl.position.set(0, 2, 4); scene.add(pl);
-    const pl2 = new THREE.PointLight(0xf5a623, 2, 15);
+    const pl2 = new THREE.PointLight(0xf5a623, 10, 15);
     pl2.position.set(3, -2, 3); scene.add(pl2);
+    const pl3 = new THREE.PointLight(0xffffff, 8, 12);  // close trophy light
+    pl3.position.set(2.5, 1, 5); scene.add(pl3);
 
-    // ── Laptop GLB ─────────────────────────
-    const laptopGroup = new THREE.Group();
-    laptopGroup.position.set(2.5, -0.3, 0);
-    laptopGroup.rotation.y = -0.4;
-    scene.add(laptopGroup);
+    // ── Trophy GLB ─────────────────────────
+    const trophyGroup = new THREE.Group();
+    trophyGroup.position.set(2.8, 0.0, 0);   // centered vertically, slightly right
+    trophyGroup.rotation.y = -0.3;
+    scene.add(trophyGroup);
 
-    let laptopMixer = null;
-    loadGLB(GLB.laptop, laptopGroup, 2.8).then(({ mixer }) => {
-      laptopMixer = mixer;
+    let trophyMixer = null;
+    loadGLB(GLB.trophy, trophyGroup, 3.2).then(({ mixer }) => {   // larger fit radius
+      trophyMixer = mixer;
     }).catch(() => {
       // Fallback: simple glowing box if model fails
       const fb = new THREE.Mesh(
         new THREE.BoxGeometry(1.8, 1.1, 0.1),
         new THREE.MeshStandardMaterial({ color: 0x4f6ef7, metalness: .9, roughness: .1 })
       );
-      laptopGroup.add(fb);
+      trophyGroup.add(fb);
     });
 
     // ── Decorative floating shapes ──────────
@@ -317,10 +333,10 @@ function HeroThreeScene() {
       const delta = clock.getDelta();
       t += 0.01;
 
-      if (laptopMixer) laptopMixer.update(delta);
+      if (trophyMixer) trophyMixer.update(delta);
 
-      laptopGroup.rotation.y = -0.4 + Math.sin(t * .4) * .08;
-      laptopGroup.position.y = -0.3 + Math.sin(t * .5) * .10;
+      trophyGroup.rotation.y = -0.3 + Math.sin(t * .4) * .08;
+      trophyGroup.position.y = 0.0 + Math.sin(t * .5) * .10;
 
       shapes.forEach(({ m, rx=0, ry=0, rz=0, fAmp, fSpd, fPh }) => {
         m.rotation.x += rx; m.rotation.y += ry; m.rotation.z += rz;
@@ -472,13 +488,14 @@ function MiniScene({ type, color }) {
     const renderer = makeRenderer(el, SIZE, SIZE);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(46, 1, .1, 30);
-    camera.position.set(0, 0, 3.6);
+    camera.position.set(0, 0, 3.8);  // slightly pulled back for better framing
 
     // Lighting — coloured to match card accent
-    scene.add(new THREE.AmbientLight(0xffffff, .55));
-    const dl = new THREE.DirectionalLight(color, 4.5); dl.position.set(2, 3, 2); scene.add(dl);
-    const pl = new THREE.PointLight(0xffffff, 2.5, 14); pl.position.set(-2, -1, 2); scene.add(pl);
-    const rim = new THREE.PointLight(color, 1.5, 10); rim.position.set(0, -2, -2); scene.add(rim);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));   // was 0.55 — brighter fill
+    const dl = new THREE.DirectionalLight(color, 5.0); dl.position.set(2, 3, 2); scene.add(dl);  // was 4.5
+    const pl = new THREE.PointLight(0xffffff, 3.5, 14); pl.position.set(-2, -1, 2); scene.add(pl); // was 2.5
+    const rim = new THREE.PointLight(color, 2.0, 10); rim.position.set(0, -2, -2); scene.add(rim);
+    const top = new THREE.PointLight(0xffffff, 2.0, 10); top.position.set(0, 3, 1); scene.add(top); // new top fill
 
     // animFn receives delta each frame; replaced by async loaders once models arrive
     let animFn = (_delta) => {};
@@ -521,7 +538,7 @@ function MiniScene({ type, color }) {
             });
           }
         });
-        camera.position.set(0, 0, 3.2);
+        camera.position.set(0, 0, 3.4);
         animFn = () => { model.rotation.y += .010; };
       }).catch(() => {
         const mat = new THREE.MeshStandardMaterial({ color, metalness:.4, roughness:.5 });
@@ -575,7 +592,7 @@ function MiniScene({ type, color }) {
     };
   }, [type, color]);
 
-  return <div ref={mountRef} />;
+  return <div ref={mountRef} style={{ width: 110, height: 110, display: "flex", alignItems: "center", justifyContent: "center" }} />;
 }
 
 /* ═══════════════════════════════════════════
@@ -732,7 +749,7 @@ function Categories() {
           {cats.map((cat,i) => (
             <div key={cat.title} className="cat-card glow-card reveal" style={{ transitionDelay:`${i*.12}s` }}
               onMouseMove={e => { const r=e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty("--mx",((e.clientX-r.left)/r.width*100)+"%"); e.currentTarget.style.setProperty("--my",((e.clientY-r.top)/r.height*100)+"%"); }}>
-              <div style={{ width:110, height:110, marginBottom:16 }}>
+              <div style={{ width:110, height:110, marginBottom:16, display:"flex", alignItems:"center", justifyContent:"center" }}>
                 <MiniScene type={cat.type} color={cat.color} />
               </div>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
