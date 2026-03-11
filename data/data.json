@@ -1,0 +1,23 @@
+{
+  "leaderboard": {
+    "names": [
+      "Alex Rivera",
+      "Jordan Chen",
+      "Morgan Knight",
+      "Casey Williams",
+      "Riley Taylor",
+      "Quinn Murphy",
+      "Sage Anderson",
+      "Blake Johnson",
+      "Dakota Lee",
+      "Jordan Davis",
+      "Casey Smith",
+      "Morgan Brown",
+      "Alex Thompson",
+      "Riley Martinez",
+      "Quinn Garcia"
+    ],
+    "scores": [98520, 97840, 96150, 95670, 94320, 93210, 92450, 91890, 90540, 89320, 87890, 86540, 85210, 83450, 82100],
+    "countries": ["USA", "Canada", "UK", "India", "Australia", "Germany", "France"]
+  }
+}
