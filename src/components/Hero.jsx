@@ -14,7 +14,7 @@ function Hero() {
             <span className="badge-dot" />&nbsp;1,842 competitions live right now
           </div>
           <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(4.5rem,9vw,8.5rem)", lineHeight:.95, letterSpacing:".03em", color:"#fff", marginBottom:28, opacity:visible?1:0, transform:visible?"none":"translateY(30px)", transition:"all .9s cubic-bezier(.16,1,.3,1) .25s" }}>
-            COMPETE.<br /><span className="shimmer-text">IMPROVE.</span><br />WIN BIG.
+            COMPETE CHALLENGES.<br /><span className="shimmer-text">IMPROVE YOURSELF.</span><br />WIN BIG.
           </h1>
           <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"1.15rem", lineHeight:1.75, color:"#9CA3AF", maxWidth:500, marginBottom:48, opacity:visible?1:0, transform:visible?"none":"translateY(20px)", transition:"all .9s cubic-bezier(.16,1,.3,1) .4s" }}>
             Enter skill-based competitions in fitness, coding, cooking &amp; creativity. Prove yourself. Earn rewards. Rise through the ranks.

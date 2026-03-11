@@ -1,4 +1,108 @@
 import data from "../../data/data.json";
+import { useEffect, useRef } from "react";
+
+// 3D Model Viewer Component
+function ModelViewer({ modelPath, size = 64 }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let renderer, animationFrameId, mixer;
+
+    const init = async () => {
+      const THREE = await import("three");
+      const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader.js");
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(size, size);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      renderer.setClearColor(0x000000, 0);
+      containerRef.current.appendChild(renderer.domElement);
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+      dirLight.position.set(5, 10, 5);
+      dirLight.castShadow = true;
+      scene.add(dirLight);
+      const fillLight = new THREE.DirectionalLight(0x8899ff, 0.4);
+      fillLight.position.set(-5, 2, -5);
+      scene.add(fillLight);
+
+      const loader = new GLTFLoader();
+      try {
+        const gltf = await loader.loadAsync(modelPath);
+        const model = gltf.scene;
+
+        // ✅ Step 1: Add model to scene FIRST so transforms are applied
+        scene.add(model);
+
+        // ✅ Step 2: Compute bounding box AFTER adding to scene
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const modelSize = box.getSize(new THREE.Vector3());
+
+        // ✅ Step 3: Normalize scale so longest axis = 2 units
+        const maxDim = Math.max(modelSize.x, modelSize.y, modelSize.z);
+        const scale = 2.0 / maxDim;
+        model.scale.setScalar(scale);
+
+        // ✅ Step 4: Re-center AFTER scaling
+        const scaledBox = new THREE.Box3().setFromObject(model);
+        const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+        model.position.sub(scaledCenter);
+
+        // ✅ Step 5: Position camera based on actual scaled size
+        const scaledSize = scaledBox.getSize(new THREE.Vector3());
+        const maxScaledDim = Math.max(scaledSize.x, scaledSize.y, scaledSize.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxScaledDim / 2 / Math.tan(fov / 2));
+        cameraZ *= 1.5; // add some breathing room
+        camera.position.set(0, scaledSize.y * 0.1, cameraZ);
+        camera.lookAt(0, 0, 0);
+
+        if (gltf.animations && gltf.animations.length > 0) {
+          mixer = new THREE.AnimationMixer(model);
+          gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+        }
+
+      } catch (err) {
+        console.error("Error loading 3D model:", err);
+      }
+
+      const clock = new THREE.Clock();
+      const animate = () => {
+        animationFrameId = requestAnimationFrame(animate);
+        if (mixer) mixer.update(clock.getDelta());
+        renderer.render(scene, camera);
+      };
+      animate();
+    };
+
+    init();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (mixer) mixer.stopAllAction();
+      if (containerRef.current && renderer?.domElement) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      renderer?.dispose();
+    };
+  }, [modelPath, size]);
+
+  return <div ref={containerRef} style={{ width: size, height: size }} />;
+}
 
 // Static leaderboard data
 const generateLeaderboardData = (tournamentId) => {
@@ -190,21 +294,8 @@ export default function Leaderboard({ tournament, onBack }) {
               gap: 16,
               marginBottom: 20,
             }}>
-              <div style={{
-                width: 64,
-                height: 64,
-                borderRadius: 16,
-                background: `${tournament.color}18`,
-                border: `2px solid ${tournament.color}`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.2rem",
-                fontWeight: 800,
-                color: tournament.color,
-              }}>
-                TROPHY
-              </div>
+              
+                <ModelViewer modelPath="/mei (1).glb" size={150} />
               <div>
                 <h1 style={{
                   fontFamily: "'Syne',sans-serif",
