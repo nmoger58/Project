@@ -4,105 +4,145 @@ import { useEffect, useRef } from "react";
 // 3D Model Viewer Component
 function ModelViewer({ modelPath, size = 64 }) {
   const containerRef = useRef(null);
+  const isMountedRef = useRef(true);
+  const rafRef = useRef(0);
+  const localStateRef = useRef({ scene: null, camera: null, renderer: null, mixer: null, clock: null });
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    let renderer, animationFrameId, mixer;
+    isMountedRef.current = true;
+    const state = localStateRef.current;
 
     const init = async () => {
-      const THREE = await import("three");
-      const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader.js");
+      // Double-check mount + container
+      if (!isMountedRef.current || !containerRef.current) return;
 
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(size, size);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      renderer.outputColorSpace = THREE.SRGBColorSpace;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.2;
-      renderer.setClearColor(0x000000, 0);
-      containerRef.current.appendChild(renderer.domElement);
-
-      // Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-      dirLight.position.set(5, 10, 5);
-      dirLight.castShadow = true;
-      scene.add(dirLight);
-      const fillLight = new THREE.DirectionalLight(0x8899ff, 0.4);
-      fillLight.position.set(-5, 2, -5);
-      scene.add(fillLight);
-
-      const loader = new GLTFLoader();
       try {
+        const THREE = await import("three");
+        const { GLTFLoader } = await import("three/examples/jsm/loaders/GLTFLoader.js");
+
+        // Fresh instance
+        state.scene = new THREE.Scene();
+        state.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+
+        state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        state.renderer.setSize(size, size);
+        state.renderer.setPixelRatio(window.devicePixelRatio);
+        state.renderer.shadowMap.enabled = true;
+        state.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        state.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        state.renderer.toneMappingExposure = 1.2;
+        state.renderer.setClearColor(0x000000, 0);
+
+        // Safe DOM ops
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
+          containerRef.current.appendChild(state.renderer.domElement);
+        } else {
+          return; // Bail if DOM gone
+        }
+
+        // Lights
+        state.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true;
+        state.scene.add(dirLight);
+        const fillLight = new THREE.DirectionalLight(0x8899ff, 0.4);
+        fillLight.position.set(-5, 2, -5);
+        state.scene.add(fillLight);
+
+        // Model load
+        const loader = new GLTFLoader();
         const gltf = await loader.loadAsync(modelPath);
+        if (!isMountedRef.current) return; // Guard post-load
+
         const model = gltf.scene;
+        state.scene.add(model);
 
-        // ✅ Step 1: Add model to scene FIRST so transforms are applied
-        scene.add(model);
-
-        // ✅ Step 2: Compute bounding box AFTER adding to scene
+        // Scaling/centering (your logic unchanged)
         const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
         const modelSize = box.getSize(new THREE.Vector3());
-
-        // ✅ Step 3: Normalize scale so longest axis = 2 units
         const maxDim = Math.max(modelSize.x, modelSize.y, modelSize.z);
         const scale = 2.0 / maxDim;
         model.scale.setScalar(scale);
 
-        // ✅ Step 4: Re-center AFTER scaling
         const scaledBox = new THREE.Box3().setFromObject(model);
         const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
         model.position.sub(scaledCenter);
 
-        // ✅ Step 5: Position camera based on actual scaled size
         const scaledSize = scaledBox.getSize(new THREE.Vector3());
         const maxScaledDim = Math.max(scaledSize.x, scaledSize.y, scaledSize.z);
-        const fov = camera.fov * (Math.PI / 180);
-        let cameraZ = Math.abs(maxScaledDim / 2 / Math.tan(fov / 2));
-        cameraZ *= 1.5; // add some breathing room
-        camera.position.set(0, scaledSize.y * 0.1, cameraZ);
-        camera.lookAt(0, 0, 0);
+        const fov = state.camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxScaledDim / 2 / Math.tan(fov / 2)) * 1.5;
+        state.camera.position.set(0, scaledSize.y * 0.1, cameraZ);
+        state.camera.lookAt(0, 0, 0);
 
-        if (gltf.animations && gltf.animations.length > 0) {
-          mixer = new THREE.AnimationMixer(model);
-          gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+        if (gltf.animations?.length > 0) {
+          state.mixer = new THREE.AnimationMixer(model);
+          gltf.animations.forEach((clip) => state.mixer.clipAction(clip).play());
         }
 
-      } catch (err) {
-        console.error("Error loading 3D model:", err);
-      }
+        state.clock = new THREE.Clock();
 
-      const clock = new THREE.Clock();
-      const animate = () => {
-        animationFrameId = requestAnimationFrame(animate);
-        if (mixer) mixer.update(clock.getDelta());
-        renderer.render(scene, camera);
-      };
-      animate();
+        // Animate loop
+        const animate = () => {
+          if (!isMountedRef.current || !state.renderer) return;
+          rafRef.current = requestAnimationFrame(animate);
+          if (state.mixer) state.mixer.update(state.clock.getDelta());
+          state.renderer.render(state.scene, state.camera);
+        };
+        animate();
+      } catch (err) {
+        console.error("3D init error:", err);
+      }
     };
 
     init();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      if (mixer) mixer.stopAllAction();
-      if (containerRef.current && renderer?.domElement) {
-        containerRef.current.removeChild(renderer.domElement);
+      isMountedRef.current = false;
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
       }
-      renderer?.dispose();
+      // Safe cleanup
+      const state = localStateRef.current;
+      if (state.mixer) {
+        state.mixer.stopAllAction();
+        state.mixer = null;
+      }
+      if (state.scene && state.renderer) {
+        state.scene.traverse((obj) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach(mat => mat.dispose?.());
+            } else {
+              obj.material.dispose?.();
+            }
+          }
+        });
+      }
+      if (state.renderer) {
+        state.renderer.dispose();
+        state.renderer.forceContextLoss?.();
+        state.renderer.domElement?.remove?.();
+        state.renderer = null;
+      }
+      // Safe DOM nuke
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+      // Reset state
+      Object.assign(localStateRef.current, { scene: null, camera: null, renderer: null, mixer: null, clock: null });
     };
   }, [modelPath, size]);
 
-  return <div ref={containerRef} style={{ width: size, height: size }} />;
+  return <div ref={containerRef} style={{ width: size, height: size, overflow: 'hidden' }} />;
 }
+
+
 
 // Static leaderboard data
 const generateLeaderboardData = (tournamentId) => {

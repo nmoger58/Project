@@ -1,3 +1,383 @@
+import { useState } from "react";
+
+// Tournament Registration Form Component
+function RegistrationForm({ tournament, onSubmit, onCancel }) {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    username: "",
+    country: "",
+    experience: "beginner",
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Simulate submission delay
+    setTimeout(() => {
+      onSubmit(formData);
+      setIsSubmitting(false);
+    }, 500);
+  };
+
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,.7)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1000,
+      backdropFilter: "blur(4px)",
+    }}>
+      <div style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 24,
+        padding: 40,
+        maxWidth: 500,
+        width: "90%",
+        maxHeight: "90vh",
+        overflow: "auto",
+      }}>
+        {/* Header */}
+        <div style={{ marginBottom: 28 }}>
+          <h2 style={{
+            fontFamily: "'Syne',sans-serif",
+            fontSize: "1.8rem",
+            fontWeight: 800,
+            color: "#fff",
+            marginBottom: 8,
+          }}>
+            Join Tournament
+          </h2>
+          <p style={{
+            fontFamily: "'DM Sans',sans-serif",
+            fontSize: 14,
+            color: "#6B7280",
+          }}>
+            {tournament.title}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* Full Name */}
+          <div>
+            <label style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#D1D5DB",
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+              display: "block",
+              marginBottom: 8,
+            }}>
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+              placeholder="Enter your full name"
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "var(--bg2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                color: "#fff",
+                outline: "none",
+                transition: "all .2s",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = tournament.color;
+                e.target.style.boxShadow = `0 0 0 2px ${tournament.color}26`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#D1D5DB",
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+              display: "block",
+              marginBottom: 8,
+            }}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              placeholder="your.email@example.com"
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "var(--bg2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                color: "#fff",
+                outline: "none",
+                transition: "all .2s",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = tournament.color;
+                e.target.style.boxShadow = `0 0 0 2px ${tournament.color}26`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* Username */}
+          <div>
+            <label style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#D1D5DB",
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+              display: "block",
+              marginBottom: 8,
+            }}>
+              Username
+            </label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              placeholder="your_username"
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "var(--bg2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                color: "#fff",
+                outline: "none",
+                transition: "all .2s",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = tournament.color;
+                e.target.style.boxShadow = `0 0 0 2px ${tournament.color}26`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* Country */}
+          <div>
+            <label style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#D1D5DB",
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+              display: "block",
+              marginBottom: 8,
+            }}>
+              Country
+            </label>
+            <input
+              type="text"
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              required
+              placeholder="Enter your country"
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "var(--bg2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                color: "#fff",
+                outline: "none",
+                transition: "all .2s",
+                boxSizing: "border-box",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = tournament.color;
+                e.target.style.boxShadow = `0 0 0 2px ${tournament.color}26`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* Experience Level */}
+          <div>
+            <label style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#D1D5DB",
+              textTransform: "uppercase",
+              letterSpacing: ".05em",
+              display: "block",
+              marginBottom: 8,
+            }}>
+              Experience Level
+            </label>
+            <select
+              name="experience"
+              value={formData.experience}
+              onChange={handleChange}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "var(--bg2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                color: "#fff",
+                outline: "none",
+                transition: "all .2s",
+                boxSizing: "border-box",
+                cursor: "pointer",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = tournament.color;
+                e.target.style.boxShadow = `0 0 0 2px ${tournament.color}26`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              <option value="expert">Expert</option>
+            </select>
+          </div>
+
+          {/* Buttons */}
+          <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={onCancel}
+              style={{
+                flex: 1,
+                padding: "12px 20px",
+                background: "var(--bg2)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#9CA3AF",
+                cursor: "pointer",
+                transition: "all .2s",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = "#4B5563";
+                e.target.style.color = "#D1D5DB";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.color = "#9CA3AF";
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                flex: 1,
+                padding: "12px 20px",
+                background: tournament.color,
+                border: "none",
+                borderRadius: 12,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#000",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                transition: "all .2s",
+                opacity: isSubmitting ? 0.7 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!isSubmitting) {
+                  e.target.style.transform = "translateY(-2px)";
+                  e.target.style.boxShadow = `0 12px 24px ${tournament.color}40`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "none";
+              }}
+            >
+              {isSubmitting ? "Registering..." : "Register Now"}
+            </button>
+          </div>
+
+          {/* Terms Note */}
+          <p style={{
+            fontFamily: "'DM Sans',sans-serif",
+            fontSize: 11,
+            color: "#6B7280",
+            textAlign: "center",
+            marginTop: 8,
+          }}>
+            By registering, you agree to our terms and conditions
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // Static tournament data
 export const TOURNAMENTS = [
   {
@@ -69,12 +449,36 @@ export const TOURNAMENTS = [
 ];
 
 export default function Tournaments({ onSelectTournament }) {
+  const [selectedTournament, setSelectedTournament] = useState(null);
+
+  const handleTournamentClick = (tournament) => {
+    setSelectedTournament(tournament);
+  };
+
+  const handleRegistrationSubmit = (formData) => {
+    // Call the parent callback with both tournament and registration data
+    onSelectTournament(selectedTournament, formData);
+    setSelectedTournament(null);
+  };
+
+  const handleCancel = () => {
+    setSelectedTournament(null);
+  };
   return (
     <div style={{
       minHeight: "100vh",
       background: "var(--bg)",
       padding: "120px 40px 80px",
     }}>
+      {/* Registration Form Modal */}
+      {selectedTournament && (
+        <RegistrationForm
+          tournament={selectedTournament}
+          onSubmit={handleRegistrationSubmit}
+          onCancel={handleCancel}
+        />
+      )}
+
       <div style={{ maxWidth: 1240, margin: "0 auto" }}>
         {/* Header */}
         <div style={{ marginBottom: 80 }}>
@@ -123,7 +527,7 @@ export default function Tournaments({ onSelectTournament }) {
           {TOURNAMENTS.map((tournament) => (
             <div
               key={tournament.id}
-              onClick={() => onSelectTournament(tournament)}
+              onClick={() => handleTournamentClick(tournament)}
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
